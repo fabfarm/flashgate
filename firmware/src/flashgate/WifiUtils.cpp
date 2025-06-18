@@ -5,13 +5,29 @@ const char *password = "imakestuff";
 
 void setupWifi()
 {
-  // Connect to Wi-Fi
+  // Connect to Wi-Fi with timeout
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
+  Serial.println("Connecting to WiFi...");
+  
+  int attempts = 0;
+  const int maxAttempts = 30; // 30 seconds timeout
+  
+  while (WiFi.status() != WL_CONNECTED && attempts < maxAttempts)
   {
     delay(1000);
-    Serial.println("Connecting to WiFi...");
+    attempts++;
+    Serial.print(".");
   }
-  Serial.println("Connected to WiFi");
-  Serial.println(WiFi.localIP());
+  
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    Serial.println("\nConnected to WiFi");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+  }
+  else
+  {
+    Serial.println("\nFailed to connect to WiFi");
+    // Could implement AP mode fallback here
+  }
 }

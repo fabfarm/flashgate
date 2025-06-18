@@ -13,6 +13,9 @@
 #define LONG_PULSE_WINDOW 9
 #define THRESHOLD 300.0
 
+// Function declarations
+void read_and_detect_pulse();
+
 uint8_t byte_index = 0;
 uint16_t history[N];
 
@@ -31,25 +34,27 @@ void create_samples(uint16_t sample)
 // Function to compare averages of two sets of N elements each
 int detectPulses(int size)
 {
-  // Calculate the average of the first N elements
+  // Calculate the average of the older elements (first part of buffer)
   double avg1 = 0;
-  for (int i = 0; i < N; i++)
+  int start1 = (byte_index + N - size) % N;
+  for (int i = 0; i < size; i++)
   {
-    avg1 += history[i];
+    avg1 += history[(start1 + i) % N];
   }
-  avg1 /= (double)N;
+  avg1 /= (double)size;
 
-  // Calculate the average of the next 10 elements
+  // Calculate the average of the recent elements (last 'size' elements)
   double avg2 = 0;
-  for (int i = N - size; i < N; i++)
+  for (int i = 0; i < size; i++)
   {
-    avg2 += history[i];
+    int idx = (byte_index + N - size + i) % N;
+    avg2 += history[idx];
   }
-  avg2 /= double(size);
+  avg2 /= (double)size;
   // Serial.printf("Avg1:%.3f\n", avg1);
   // Serial.printf("Avg2:%.3f\n", avg2);
 
-  double diff = avg1 - avg2;
+  double diff = avg2 - avg1; // Compare recent vs older
   // Serial.printf("Diff:%.3f\n", diff);
 
   // Compare averages
@@ -84,7 +89,6 @@ void read_and_detect_pulse()
   int sensorData = analogRead(LIGHT_SENSOR_PIN);
   uint16_t sample = (uint16_t)sensorData;
   unsigned long startTime = millis();
-  bool longPulse = false;
 
   create_samples(sample);
   
