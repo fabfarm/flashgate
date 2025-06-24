@@ -67,16 +67,29 @@ char detectMorseSignal() {
     wait(10);  // Wait until the beam is no longer detected
   }
   int duration = millis() - startTime;
-  Serial.print(duration);
   return (duration >= dashDuration) ? '-' : '.';
 }
 
 
 void detectPattern() {
   
-  inputPattern += detectMorseSignal(); // Detect the Morse code signal and append it to inputPattern
-  if (inputPattern.length() > strlen(pattern)) {
-    inputPattern.remove(0, 1);
+  if (detectBeam()) {
+    inputPattern += detectMorseSignal(); // Detect the Morse code signal and append it to inputPattern
+    if (inputPattern.length() > strlen(pattern)) {
+      inputPattern.remove(0, 1);
+    }
+    Serial.print("Detected Pattern: ");
+    Serial.println(inputPattern); // Print the detected pattern to the serial monitor
+
+    // Compare inputPattern (String) with pattern (char array)
+    if (inputPattern.equals(pattern)) {
+      Serial.println("Pattern matched!");
+      Serial.println("BEAM MEE UPP!!\n");
+      openGate();
+      wait(gateOpenTime);
+      closeGate();
+      inputPattern = ""; // Reset after successful match
+    }
   }
 }
 
@@ -94,15 +107,4 @@ void setup() {
 void loop() {
   wait(spaceDuration); // Add a short delay to prevent excessive CPU usage
   detectPattern(); // Detect the Morse code pattern
-  Serial.print("Detected Pattern: ");
-  Serial.println(inputPattern); // Print the detected pattern to the serial monitor
-
-  // if (detectBeam()) {
-  //   openGate(); // Open the gate if the beam is detected
-  //   while(detectBeam()) {
-  //     // Wait until the beam is no longer detected
-  //     wait(100); // Short delay to avoid busy-waiting
-  //   }
-  //   closeGate(); // Close the gate after the beam is no longer detected
-  // }
 }
