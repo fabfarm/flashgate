@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Light Sensor Value</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+    #value, #lastValue { font-size: 2em; color: #333; }
+    button { padding: 10px 20px; font-size: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Current Light Value</h1>
+  <div>Current: <span id="value">--</span></div>
+  <div>Previous: <span id="lastValue">--</span></div>
+  <button onclick="fetchLight()">Read Again</button>
+  <script>
+    function fetchLight() {
+      fetch('/light')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('value').textContent = data.value;
+          document.getElementById('lastValue').textContent = data.lastValue;
+        })
+        .catch(() => {
+          document.getElementById('value').textContent = 'Error';
+          document.getElementById('lastValue').textContent = 'Error';
+        });
+    }
+    // Fetch once on load
+    fetchLight();
+  </script>
+</body>
+</html>
