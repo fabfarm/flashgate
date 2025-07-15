@@ -1,8 +1,11 @@
-#include <Arduino.h>
+#include "Config.h"
 
-// This library provides utility functions for various tasks
+int initTime = 0;
+int dotCount = 0;
+int dashCount = 0;
+int lastValue = 0;
+String inputPattern = "";
 
-//Uses non blocking delay code
 void wait(int miliseconds){
   uint32_t start = millis();
   while (millis() - start < miliseconds) {

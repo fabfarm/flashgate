@@ -1,6 +1,6 @@
-#include "WifiUtil.h"
+#include "WifiManager.h"
 #include <WiFi.h>
-#include "Util.h"
+#include "Config.h"
 
 // WIFI credentials
 const char *ssid = "fabfarm";
