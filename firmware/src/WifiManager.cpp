@@ -2,13 +2,6 @@
 #include <WiFi.h>
 #include "Config.h"
 
-// WIFI credentials
-const char *ssid = "fabfarm";
-const char *password = "imakestuff";
-
-// Timeout settings
-const int maxAttempts = 30; 
-
 void setupWifi()
 {
   // Connect to Wi-Fi

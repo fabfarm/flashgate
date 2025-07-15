@@ -24,22 +24,22 @@ void openGate() {
 // Main setup
 void setup() {
   Serial.begin(115200);
+  Serial.println("Initialising...");
   setupPins();
   
-  initTime = millis(); // Initialize initTime with the current time
-  lastValue = getLightValue(); // Initialize lastValue with the first reading from the light sensor
-
-  setupWifi();
-  setupWebServer();
+  initSensorLogic(); // Initialize sensor logic variables
+  //setupWifi();
+  //setupWebServer();
   
   neopixelWrite(NEOPIXEL_PIN, 128,0,128); // Set to purple (R=128, G=0, B=128)
+  Serial.println("GateRebooted iniated!");
 }
     
 // Main loop
 void loop() {
   wait(100); // Add a short delay to prevent excessive CPU usage
-  if (detectPattern() || checkCount()) {
-    Serial.println("Count reached!");
+  if (detectPattern()) {
+    Serial.println("Pattern match!");
     Serial.println("BEAM MEE UPP!!\n");
     openGate();
     wait(gateOpenTime);

@@ -2,6 +2,7 @@
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
 #include "Config.h"
+#include "SensorLogic.h"
 
 AsyncWebServer server(80);
 
@@ -22,7 +23,7 @@ void setupWebServer() {
 
   // Register dynamic endpoint first!
   server.on("/light", HTTP_GET, [](AsyncWebServerRequest *request){
-    String json = String("{\"value\":") + lastValue + ",\"lastValue\":" + lastValue + "}";
+    String json = String("{\"value\":") + getLightValue()+ "}";
     request->send(200, "application/json", json);
   });
 

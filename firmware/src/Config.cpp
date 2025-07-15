@@ -1,11 +1,6 @@
 #include "Config.h"
 
-int initTime = 0;
-int dotCount = 0;
-int dashCount = 0;
-int lastValue = 0;
-String inputPattern = "";
-
+// Non-blocking delay utility function
 void wait(int miliseconds){
   uint32_t start = millis();
   while (millis() - start < miliseconds) {
