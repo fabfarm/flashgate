@@ -1,10 +1,13 @@
+#include <Arduino.h>
 #include <LittleFS.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncTCP.h>
 #include "Config.h"
-#include "SensorLogic.h"
+#include "PatternDetection.h"
 
 AsyncWebServer server(80);
+AsyncEventSource events("/events");
+
 
 void setupWebServer() {
   if (!LittleFS.begin(true)) {
@@ -21,14 +24,23 @@ void setupWebServer() {
   }
   Serial.println("LittleFS files listed.");
 
-  // Register dynamic endpoint first!
+  // Register dynamic endpoints
   server.on("/light", HTTP_GET, [](AsyncWebServerRequest *request){
-    String json = String("{\"value\":") + getLightValue()+ "}";
+    String json = String("{\"value\":") + getLightValue() + "}";
     request->send(200, "application/json", json);
   });
 
   // Then serve static files
   server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
-
+  server.addHandler(&events);
   server.begin();
 }
+
+void sendData(String eventName, String data) {
+  if (events.count() == 0) { Serial.println("No clients"); return; } // only send if clients connected
+  String json = "{\"" + eventName + "\":\"" + String(data) + "\"}";
+  events.send(json.c_str(), "message", millis());
+}
+
+  
+

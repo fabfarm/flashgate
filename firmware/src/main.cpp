@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "WifiManager.h"
 #include "Webserver.h"
-#include "SensorLogic.h"
+#include "PatternDetection.h"
 #include "Config.h"
 
 void setupPins(){
@@ -28,13 +28,22 @@ void setup() {
   setupPins();
   
   initSensorLogic(); // Initialize sensor logic variables
-  //setupWifi();
-  //setupWebServer();
+  setupWifi();
+  setupWebServer();
   
   neopixelWrite(NEOPIXEL_PIN, 128,0,128); // Set to purple (R=128, G=0, B=128)
   Serial.println("GateRebooted iniated!");
 }
-    
+
+int initTime = millis();
+
+void sendSensorReadings() {
+  if (millis() - initTime < 300) { return; }
+  int lightValue = getLightValue();
+  sendData("light", String(lightValue));
+  initTime = millis(); // Reset initTime to avoid sending too frequently
+}
+
 // Main loop
 void loop() {
   wait(100); // Add a short delay to prevent excessive CPU usage
@@ -45,4 +54,5 @@ void loop() {
     wait(gateOpenTime);
     closeGate();
   }
+  sendSensorReadings(); // Send sensor readings periodically
 }

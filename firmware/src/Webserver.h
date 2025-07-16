@@ -4,5 +4,6 @@
 
 extern AsyncWebServer server;
 void setupWebServer();
+void sendData(String eventName, String data);
 
 

@@ -1,4 +1,5 @@
-#include "SensorLogic.h"
+#include "PatternDetection.h"
+#include "WebServer.h"
 #include "Config.h"
 
 //Variables
@@ -63,10 +64,6 @@ void countMorse(char symbol){
 
 // returns true if matching morse pattern is detected
 boolean checkMorse() {
-    #if debugPattern // debugging print
-       
-    #endif
-   
     // Check if pattern matches
     if (inputPattern.equals(pattern)) {
       inputPattern = "";
@@ -75,11 +72,17 @@ boolean checkMorse() {
     return false;
 }
 
+void resetCount(){
+    dotCount = 0;
+    dashCount = 0;
+    sendData("dots", String(dotCount));
+    sendData("dashes", String(dashCount));
+}
+
 // returns true if count of dots and dashes matches the expected values
 boolean checkCount(){      
     if (dotCount == maxDotCount && dashCount == maxDashCount) {
-        dotCount = 0;
-        dashCount = 0;
+        resetCount(); // Reset count after successful match
         return true;
     }
     return false;
@@ -87,8 +90,7 @@ boolean checkCount(){
 
 void checkCountTimeout(){
     if (millis() - lastCountUpdate >= timeoutDuration) {
-        dotCount = 0;
-        dashCount = 0;
+        resetCount(); // Reset count if timeout occurs
     }
 }
 
@@ -113,6 +115,12 @@ boolean detectPattern() {
         Serial.println(duration);
     #endif
 
+    sendData("dots", String(dotCount));
+    sendData("dashes", String(dashCount));
+    sendData("pattern", inputPattern);
+    sendData("time", String(duration));
+    sendData("light", String(getLightValue()));
+
     #if checkMorsePattern
         if (checkMorse()) {
             return true;
@@ -127,9 +135,6 @@ boolean detectPattern() {
   }
   return false; // No pattern matched
 }
-
-
-
 
 void initSensorLogic() {
   dotCount = 0;
