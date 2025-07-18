@@ -37,7 +37,7 @@ void setupWebServer() {
 }
 
 void sendData(String eventName, String data) {
-  if (events.count() == 0) { Serial.println("No clients"); return; } // only send if clients connected
+  if (events.count() == 0) {return; } // only send if clients connected
   String json = "{\"" + eventName + "\":\"" + String(data) + "\"}";
   events.send(json.c_str(), "message", millis());
 }

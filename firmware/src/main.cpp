@@ -14,6 +14,8 @@ void setupPins(){
 void closeGate() {
   digitalWrite(gateRelayPin, LOW);
   neopixelWrite(NEOPIXEL_PIN, 255,0,0); // Set to red
+  wait(2000); // Keep the gate closed for 2 seconds
+  neopixelWrite(NEOPIXEL_PIN, 0,0,0); // Turn off the LED
 }
 
 void openGate() {
@@ -35,15 +37,6 @@ void setup() {
   Serial.println("GateRebooted iniated!");
 }
 
-int initTime = millis();
-
-void sendSensorReadings() {
-  if (millis() - initTime < 300) { return; }
-  int lightValue = getLightValue();
-  sendData("light", String(lightValue));
-  initTime = millis(); // Reset initTime to avoid sending too frequently
-}
-
 // Main loop
 void loop() {
   wait(100); // Add a short delay to prevent excessive CPU usage
@@ -54,5 +47,5 @@ void loop() {
     wait(gateOpenTime);
     closeGate();
   }
-  sendSensorReadings(); // Send sensor readings periodically
+  
 }
