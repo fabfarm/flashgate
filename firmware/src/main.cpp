@@ -32,6 +32,39 @@ void openGate() {
   neopixelWrite(NEOPIXEL_PIN, 0,255,0); // Set to green
 }
 
+// Servo test function to verify proper configuration
+void testServo() {
+  Serial.println("Testing servo movement...");
+  
+  // Test sequence: rest -> active -> rest -> sweep test
+  Serial.println("Moving servo to rest position (0°)");
+  patternServo.write(servoRestAngle);
+  wait(1000);
+  
+  Serial.println("Moving servo to active position (90°)");
+  patternServo.write(servoActiveAngle);
+  wait(1000);
+  
+  Serial.println("Moving servo back to rest position (0°)");
+  patternServo.write(servoRestAngle);
+  wait(1000);
+  
+  // Sweep test to verify full range
+  Serial.println("Performing sweep test...");
+  for (int angle = 0; angle <= 180; angle += 30) {
+    Serial.printf("Moving to %d degrees\n", angle);
+    patternServo.write(angle);
+    wait(500);
+  }
+  
+  // Return to rest position
+  Serial.println("Returning to rest position");
+  patternServo.write(servoRestAngle);
+  wait(1000);
+  
+  Serial.println("Servo test completed!");
+}
+
 // Manual control functions for web interface
 void manualOpenGate() {
   Serial.println("Manual gate open triggered");
@@ -48,6 +81,9 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Initialising...");
   setupPins();
+  
+  // Test servo functionality before proceeding
+  testServo();
   
   initSensorLogic(); // Initialize sensor logic variables
   setupWifi();
