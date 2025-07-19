@@ -24,7 +24,6 @@ constexpr int servoRestAngle = 0; // angle to return servo to after activation
 
 // Touch button settings
 constexpr int touchThreshold = 40; // Touch sensitivity threshold (lower = more sensitive)
-constexpr int testModeTimeout = 30000; // Test mode duration in milliseconds (30 seconds)
 constexpr int touchDebounceTime = 500; // Debounce time for touch button in milliseconds
 
 // Pattern values
