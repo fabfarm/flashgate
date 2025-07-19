@@ -35,6 +35,11 @@
       <span id="sensor-value">--</span>
       <button onclick="refreshSensor()">Refresh</button>
     </div>
+    <div class="row">
+      <label>Manual Gate Control:</label>
+      <button onclick="openGate()" style="background-color: #4CAF50; color: white;">Open Gate</button>
+      <button onclick="closeGate()" style="background-color: #f44336; color: white;">Close Gate</button>
+    </div>
   </div>
 
   <script>
@@ -79,6 +84,28 @@
         })
         .catch(() => {
           document.getElementById('sensor-value').textContent = 'Error';
+        });
+    }
+
+    function openGate() {
+      fetch('/gate/open', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Gate opened:', data);
+        })
+        .catch(error => {
+          console.error('Error opening gate:', error);
+        });
+    }
+
+    function closeGate() {
+      fetch('/gate/close', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Gate closed:', data);
+        })
+        .catch(error => {
+          console.error('Error closing gate:', error);
         });
     }
     

@@ -5,6 +5,10 @@
 #include "Config.h"
 #include "PatternDetection.h"
 
+// Forward declarations for manual gate control
+extern void manualOpenGate();
+extern void manualCloseGate();
+
 AsyncWebServer server(80);
 AsyncEventSource events("/events");
 
@@ -28,6 +32,17 @@ void setupWebServer() {
   server.on("/light", HTTP_GET, [](AsyncWebServerRequest *request){
     String json = String("{\"value\":") + getLightValue() + "}";
     request->send(200, "application/json", json);
+  });
+
+  // Manual gate control endpoints
+  server.on("/gate/open", HTTP_POST, [](AsyncWebServerRequest *request){
+    manualOpenGate();
+    request->send(200, "application/json", "{\"status\":\"gate opened\"}");
+  });
+
+  server.on("/gate/close", HTTP_POST, [](AsyncWebServerRequest *request){
+    manualCloseGate();
+    request->send(200, "application/json", "{\"status\":\"gate closed\"}");
   });
 
   // Then serve static files

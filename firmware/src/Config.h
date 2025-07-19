@@ -4,6 +4,7 @@
 // Pins \\ ---
 constexpr int lightSensorPin = 10;
 constexpr int gateRelayPin = 4;
+constexpr int servoPin = 5; // Servo control pin
 constexpr int NEOPIXEL_PIN = 48; // Onboard RGB LED data pin
 // -----------
 
@@ -14,6 +15,11 @@ constexpr int lightThreshold = 500; // Threshold for light sensor to detect the 
 
 // Gate settings
 constexpr int gateOpenTime = 2000; // duration to keep the gate open in milliseconds
+
+// Servo settings
+constexpr int servoActivationTime = 1000; // duration to keep servo active in milliseconds
+constexpr int servoActiveAngle = 90; // angle to move servo to when pattern is detected
+constexpr int servoRestAngle = 0; // angle to return servo to after activation
 
 // Pattern values
 constexpr char pattern[] = ".-..--"; // Pattern to detect in the light sensor reading
