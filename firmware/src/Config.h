@@ -6,6 +6,7 @@ constexpr int lightSensorPin = 10;
 constexpr int gateRelayPin = 4;
 constexpr int servoPin = 5; // Servo control pin
 constexpr int NEOPIXEL_PIN = 48; // Onboard RGB LED data pin
+constexpr int touchButtonPin = 14; // Touch-sensitive button pin (GPIO14 on ESP32-S3)
 // -----------
 
 // Constants \\ ---
@@ -20,6 +21,11 @@ constexpr int gateOpenTime = 2000; // duration to keep the gate open in millisec
 constexpr int servoActivationTime = 1000; // duration to keep servo active in milliseconds
 constexpr int servoActiveAngle = 90; // angle to move servo to when pattern is detected
 constexpr int servoRestAngle = 0; // angle to return servo to after activation
+
+// Touch button settings
+constexpr int touchThreshold = 40; // Touch sensitivity threshold (lower = more sensitive)
+constexpr int testModeTimeout = 30000; // Test mode duration in milliseconds (30 seconds)
+constexpr int touchDebounceTime = 500; // Debounce time for touch button in milliseconds
 
 // Pattern values
 constexpr char pattern[] = ".-..--"; // Pattern to detect in the light sensor reading
