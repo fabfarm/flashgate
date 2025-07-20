@@ -1,5 +1,5 @@
 #include "PatternDetection.h"
-#include "WebServer.h"
+#include "Webserver.h"
 #include "Config.h"
 
 // Variables

@@ -8,6 +8,7 @@
 // Forward declarations for manual gate control
 extern void manualOpenGate();
 extern void manualCloseGate();
+extern void testServoMovement();
 
 AsyncWebServer server(80);
 AsyncEventSource events("/events");
@@ -43,6 +44,12 @@ void setupWebServer() {
   server.on("/gate/close", HTTP_POST, [](AsyncWebServerRequest *request){
     manualCloseGate();
     request->send(200, "application/json", "{\"status\":\"gate closed\"}");
+  });
+
+  // Servo test endpoint
+  server.on("/servo/test", HTTP_POST, [](AsyncWebServerRequest *request){
+    testServoMovement();
+    request->send(200, "application/json", "{\"status\":\"servo test executed\"}");
   });
 
   // Then serve static files

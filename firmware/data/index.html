@@ -40,6 +40,10 @@
       <button onclick="openGate()" style="background-color: #4CAF50; color: white;">Open Gate</button>
       <button onclick="closeGate()" style="background-color: #f44336; color: white;">Close Gate</button>
     </div>
+    <div class="row">
+      <label>Servo Test:</label>
+      <button onclick="testServo()" style="background-color: #2196F3; color: white;">Test Servo Movement</button>
+    </div>
   </div>
 
   <script>
@@ -106,6 +110,17 @@
         })
         .catch(error => {
           console.error('Error closing gate:', error);
+        });
+    }
+
+    function testServo() {
+      fetch('/servo/test', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Servo test:', data);
+        })
+        .catch(error => {
+          console.error('Error testing servo:', error);
         });
     }
     
