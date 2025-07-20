@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gate Controller</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+    #value, #lastValue { font-size: 2em; color: #333; }
+    button { padding: 10px 20px; font-size: 1em; }
+    .container { display: flex; flex-direction: column; gap: 10px; margin: 20px; }
+    .row { display: flex; gap: 10px; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+      <label>Dots:</label>
+      <span id="dots-value">--</span>
+    </div>
+    <div class="row">
+      <label>Dashes:</label>
+      <span id="dashes-value">--</span>
+    </div>
+    <div class="row">
+      <label>Pattern:</label>
+      <span id="pattern-value">--</span>
+    </div>
+    <div class="row">
+      <label>Time:</label>
+      <span id="time-value">--</span>
+    </div>
+    <div class="row">
+      <label>Sensor Value:</label>
+      <span id="sensor-value">--</span>
+      <button onclick="refreshSensor()">Refresh</button>
+    </div>
+    <div class="row">
+      <label>Manual Gate Control:</label>
+      <button onclick="openGate()" style="background-color: #4CAF50; color: white;">Open Gate</button>
+      <button onclick="closeGate()" style="background-color: #f44336; color: white;">Close Gate</button>
+    </div>
+    <div class="row">
+      <label>Servo Test:</label>
+      <button onclick="testServo()" style="background-color: #2196F3; color: white;">Test Servo Movement</button>
+    </div>
+  </div>
+
+  <script>
+    // Initialize SSE connection
+    const source = new EventSource('/events');
+    
+    source.onopen = function() {
+      console.log('Connection to server opened.');
+    };
+
+    source.onerror = function(event) {
+      console.error('Error ocurred: ', event.data);
+    };
+
+
+
+    source.onmessage = function(event) {
+      console.log('New Data: ', event.data);
+      const data = JSON.parse(event.data);
+      if (data.dots !== undefined) {
+        document.getElementById('dots-value').textContent = data.dots;
+      }
+      if (data.dashes !== undefined) {
+        document.getElementById('dashes-value').textContent = data.dashes;
+      }
+      if (data.pattern !== undefined) {
+        document.getElementById('pattern-value').textContent = data.pattern;
+      }
+      if (data.time !== undefined) {
+        document.getElementById('time-value').textContent = data.time;
+      }
+      if (data.light !== undefined) {
+        document.getElementById('sensor-value').textContent = data.light;
+      }
+    };
+
+    function refreshSensor() {
+      fetch('/light')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('sensor-value').textContent = data.value;
+        })
+        .catch(() => {
+          document.getElementById('sensor-value').textContent = 'Error';
+        });
+    }
+
+    function openGate() {
+      fetch('/gate/open', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Gate opened:', data);
+        })
+        .catch(error => {
+          console.error('Error opening gate:', error);
+        });
+    }
+
+    function closeGate() {
+      fetch('/gate/close', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Gate closed:', data);
+        })
+        .catch(error => {
+          console.error('Error closing gate:', error);
+        });
+    }
+
+    function testServo() {
+      fetch('/servo/test', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Servo test:', data);
+        })
+        .catch(error => {
+          console.error('Error testing servo:', error);
+        });
+    }
+    
+    // Fetch once on load
+    refreshSensor();
+  </script>
+</body>
+</html>

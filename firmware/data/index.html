@@ -3,129 +3,209 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gate Controller</title>
+  <title>Servo Test Controller</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-    #value, #lastValue { font-size: 2em; color: #333; }
-    button { padding: 10px 20px; font-size: 1em; }
-    .container { display: flex; flex-direction: column; gap: 10px; margin: 20px; }
-    .row { display: flex; gap: 10px; justify-content: center; }
+    body { 
+      font-family: Arial, sans-serif; 
+      text-align: center; 
+      margin: 20px;
+      background-color: #f0f0f0;
+    }
+    .container { 
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; margin-bottom: 30px; }
+    .control-group { 
+      margin: 20px 0; 
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+    .control-group h3 { margin-top: 0; color: #555; }
+    button { 
+      padding: 12px 24px; 
+      font-size: 16px; 
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .test-btn { background-color: #2196F3; color: white; }
+    .test-btn:hover { background-color: #1976D2; }
+    .position-btn { background-color: #4CAF50; color: white; }
+    .position-btn:hover { background-color: #45a049; }
+    .slider-container { margin: 20px 0; }
+    #positionSlider { 
+      width: 100%; 
+      height: 25px;
+      margin: 10px 0;
+    }
+    .position-display { 
+      font-size: 24px; 
+      font-weight: bold; 
+      color: #333;
+      margin: 10px 0;
+    }
+    .status { 
+      margin: 20px 0; 
+      padding: 10px;
+      background-color: #e8f5e8;
+      border-radius: 5px;
+      color: #2e7d32;
+    }
+    .preset-buttons { display: flex; flex-wrap: wrap; justify-content: center; }
+    .preset-buttons button { 
+      background-color: #FF9800; 
+      color: white;
+      margin: 2px;
+      font-size: 14px;
+      padding: 8px 16px;
+    }
+    .preset-buttons button:hover { background-color: #F57C00; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="row">
-      <label>Dots:</label>
-      <span id="dots-value">--</span>
+    <h1>🔧 Servo Test Controller</h1>
+    
+    <div class="control-group" style="background-color: #fff3cd; border-color: #ffeaa7;">
+      <h3 style="color: #856404;">⚠️ MG996R Power Requirements</h3>
+      <p style="text-align: left; color: #856404; margin: 0;">
+        <strong>Wiring:</strong><br>
+        🟤 <strong>Brown wire</strong> → ESP32 GND<br>
+        🔴 <strong>Red wire</strong> → External 5V power supply (NOT ESP32!)<br>
+        🟡 <strong>Yellow wire</strong> → ESP32 GPIO5<br><br>
+        <strong>IMPORTANT:</strong> MG996R needs 5-6V external power (500mA-1A). ESP32 3.3V pins cannot power this servo!
+      </p>
     </div>
-    <div class="row">
-      <label>Dashes:</label>
-      <span id="dashes-value">--</span>
+    
+    <div class="control-group">
+      <h3>Automatic Range Test</h3>
+      <button onclick="startServoTest()" class="test-btn">
+        🔄 Run Full Range Test (0°-180°)
+      </button>
+      <p>Automatically moves servo through: 0° → 30° → 60° → 90° → 120° → 150° → 180° → 90° → 0°</p>
     </div>
-    <div class="row">
-      <label>Pattern:</label>
-      <span id="pattern-value">--</span>
+
+    <div class="control-group">
+      <h3>Manual Position Control</h3>
+      <div class="slider-container">
+        <label for="positionSlider">Position: </label>
+        <div class="position-display" id="positionDisplay">90°</div>
+        <input type="range" id="positionSlider" min="0" max="180" value="90" step="1">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #666;">
+          <span>0°</span>
+          <span>90°</span>
+          <span>180°</span>
+        </div>
+      </div>
+      <button onclick="moveToSliderPosition()" class="position-btn">
+        ➡️ Move to Position
+      </button>
     </div>
-    <div class="row">
-      <label>Time:</label>
-      <span id="time-value">--</span>
+
+    <div class="control-group">
+      <h3>Quick Preset Positions</h3>
+      <div class="preset-buttons">
+        <button onclick="moveToPosition(0)">0°</button>
+        <button onclick="moveToPosition(30)">30°</button>
+        <button onclick="moveToPosition(45)">45°</button>
+        <button onclick="moveToPosition(60)">60°</button>
+        <button onclick="moveToPosition(90)">90°</button>
+        <button onclick="moveToPosition(120)">120°</button>
+        <button onclick="moveToPosition(135)">135°</button>
+        <button onclick="moveToPosition(150)">150°</button>
+        <button onclick="moveToPosition(180)">180°</button>
+      </div>
     </div>
-    <div class="row">
-      <label>Sensor Value:</label>
-      <span id="sensor-value">--</span>
-      <button onclick="refreshSensor()">Refresh</button>
-    </div>
-    <div class="row">
-      <label>Manual Gate Control:</label>
-      <button onclick="openGate()" style="background-color: #4CAF50; color: white;">Open Gate</button>
-      <button onclick="closeGate()" style="background-color: #f44336; color: white;">Close Gate</button>
-    </div>
-    <div class="row">
-      <label>Servo Test:</label>
-      <button onclick="testServo()" style="background-color: #2196F3; color: white;">Test Servo Movement</button>
+
+    <div class="control-group">
+      <h3>Current Status</h3>
+      <div id="status" class="status">Ready</div>
+      <button onclick="getCurrentPosition()" class="position-btn">
+        📍 Get Current Position
+      </button>
     </div>
   </div>
 
   <script>
-    // Initialize SSE connection
-    const source = new EventSource('/events');
-    
-    source.onopen = function() {
-      console.log('Connection to server opened.');
-    };
+    const slider = document.getElementById('positionSlider');
+    const display = document.getElementById('positionDisplay');
+    const status = document.getElementById('status');
 
-    source.onerror = function(event) {
-      console.error('Error ocurred: ', event.data);
-    };
+    // Update display when slider moves
+    slider.addEventListener('input', function() {
+      display.textContent = slider.value + '°';
+    });
 
-
-
-    source.onmessage = function(event) {
-      console.log('New Data: ', event.data);
-      const data = JSON.parse(event.data);
-      if (data.dots !== undefined) {
-        document.getElementById('dots-value').textContent = data.dots;
-      }
-      if (data.dashes !== undefined) {
-        document.getElementById('dashes-value').textContent = data.dashes;
-      }
-      if (data.pattern !== undefined) {
-        document.getElementById('pattern-value').textContent = data.pattern;
-      }
-      if (data.time !== undefined) {
-        document.getElementById('time-value').textContent = data.time;
-      }
-      if (data.light !== undefined) {
-        document.getElementById('sensor-value').textContent = data.light;
-      }
-    };
-
-    function refreshSensor() {
-      fetch('/light')
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById('sensor-value').textContent = data.value;
-        })
-        .catch(() => {
-          document.getElementById('sensor-value').textContent = 'Error';
-        });
+    function updateStatus(message, isError = false) {
+      status.textContent = message;
+      status.style.backgroundColor = isError ? '#ffebee' : '#e8f5e8';
+      status.style.color = isError ? '#c62828' : '#2e7d32';
     }
 
-    function openGate() {
-      fetch('/gate/open', { method: 'POST' })
-        .then(response => response.json())
-        .then(data => {
-          console.log('Gate opened:', data);
-        })
-        .catch(error => {
-          console.error('Error opening gate:', error);
-        });
-    }
-
-    function closeGate() {
-      fetch('/gate/close', { method: 'POST' })
-        .then(response => response.json())
-        .then(data => {
-          console.log('Gate closed:', data);
-        })
-        .catch(error => {
-          console.error('Error closing gate:', error);
-        });
-    }
-
-    function testServo() {
+    function startServoTest() {
+      updateStatus('Starting automatic servo test...');
       fetch('/servo/test', { method: 'POST' })
         .then(response => response.json())
         .then(data => {
+          updateStatus('Servo test started! Watch the servo move through its range.');
           console.log('Servo test:', data);
         })
         .catch(error => {
-          console.error('Error testing servo:', error);
+          updateStatus('Error starting servo test: ' + error, true);
+          console.error('Error:', error);
         });
     }
-    
-    // Fetch once on load
-    refreshSensor();
+
+    function moveToPosition(angle) {
+      updateStatus(`Moving servo to ${angle} degrees...`);
+      fetch('/servo/position', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `angle=${angle}`
+      })
+        .then(response => response.json())
+        .then(data => {
+          updateStatus(`Servo moved to ${angle} degrees`);
+          slider.value = angle;
+          display.textContent = angle + '°';
+          console.log('Servo moved:', data);
+        })
+        .catch(error => {
+          updateStatus('Error moving servo: ' + error, true);
+          console.error('Error:', error);
+        });
+    }
+
+    function moveToSliderPosition() {
+      const angle = parseInt(slider.value);
+      moveToPosition(angle);
+    }
+
+    function getCurrentPosition() {
+      fetch('/servo/position')
+        .then(response => response.json())
+        .then(data => {
+          updateStatus(`Current position: ${data.position} degrees`);
+          slider.value = data.position;
+          display.textContent = data.position + '°';
+        })
+        .catch(error => {
+          updateStatus('Error getting position: ' + error, true);
+          console.error('Error:', error);
+        });
+    }
+
+    // Get initial position on page load
+    getCurrentPosition();
   </script>
 </body>
 </html>
