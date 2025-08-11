@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern Configuration</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+      background-color: #f0f0f0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; margin-bottom: 30px; }
+    .control-group {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+    .control-group h3 { margin-top: 0; color: #555; }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color: 0.3s;
+    }
+    .save-btn { background-color: #2196F3; color: white; }
+    .save-btn:hover { background-color: #1976D2; }
+    input[type="text"] {
+      width: 80%;
+      padding: 10px;
+      font-size: 18px;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .status {
+      margin: 20px 0;
+      padding: 10px;
+      background-color: #e8f5e8;
+      border-radius: 5px;
+      color: #2e7d32;
+    }
+    .pattern-display {
+      font-size: 28px;
+      font-weight: bold;
+      color: #333;
+      letter-spacing: 3px;
+      padding: 15px;
+      background: #eee;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    a {
+      color: #2196F3;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚙️ Pattern Configuration</h1>
+
+    <div class="control-group">
+      <h3>Current Activation Pattern</h3>
+      <div id="currentPattern" class="pattern-display">Loading...</div>
+      <p>This is the Morse-like pattern the device listens for.<br>'.' is a short pulse, '-' is a long pulse.</p>
+    </div>
+
+    <div class="control-group">
+      <h3>Set New Pattern</h3>
+      <input type="text" id="newPatternInput" placeholder="e.g., .--.-">
+      <button onclick="savePattern()" class="save-btn">💾 Save New Pattern</button>
+      <p>Only '.' and '-' characters are allowed.</p>
+    </div>
+
+    <div class="control-group">
+        <h3>Status</h3>
+        <div id="status" class="status">Ready</div>
+    </div>
+
+    <p><a href="/index.html">Back to Servo Controller</a></p>
+
+  </div>
+
+  <script>
+    const currentPatternEl = document.getElementById('currentPattern');
+    const newPatternInput = document.getElementById('newPatternInput');
+    const statusEl = document.getElementById('status');
+
+    function updateStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.style.backgroundColor = isError ? '#ffebee' : '#e8f5e8';
+      statusEl.style.color = isError ? '#c62828' : '#2e7d32';
+    }
+
+    function getCurrentPattern() {
+      updateStatus('Fetching current pattern...');
+      fetch('/api/pattern')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.pattern) {
+            currentPatternEl.textContent = data.pattern;
+            updateStatus('Successfully loaded current pattern.');
+          } else {
+            throw new Error('Invalid pattern data from device');
+          }
+        })
+        .catch(error => {
+          updateStatus('Error getting current pattern: ' + error, true);
+          currentPatternEl.textContent = 'N/A';
+          console.error('Error:', error);
+        });
+    }
+
+    function savePattern() {
+      const newPattern = newPatternInput.value;
+
+      // Basic validation
+      if (!/^[.-]+$/.test(newPattern)) {
+        updateStatus('Invalid pattern. Only use dots (.) and dashes (-).', true);
+        return;
+      }
+
+      updateStatus(`Saving new pattern: ${newPattern}...`);
+      fetch('/api/pattern', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `pattern=${encodeURIComponent(newPattern)}`
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            updateStatus('New pattern saved successfully!', false);
+            newPatternInput.value = '';
+            getCurrentPattern(); // Refresh the displayed pattern
+          } else {
+            throw new Error(data.error || 'Unknown error saving pattern');
+          }
+        })
+        .catch(error => {
+          updateStatus('Error saving pattern: ' + error, true);
+          console.error('Error:', error);
+        });
+    }
+
+    // Get initial pattern on page load
+    window.onload = getCurrentPattern;
+  </script>
+</body>
+</html>

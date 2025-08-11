@@ -5,6 +5,7 @@
 #include <AsyncTCP.h>
 #include <LittleFS.h>
 #include "Config.h"
+#include "PatternDetection.h"
 
 // Servo object
 Servo testServo;
@@ -22,6 +23,75 @@ const int numTestPositions = sizeof(testPositions) / sizeof(testPositions[0]);
 
 // Manual servo position control
 int currentServoPosition = 90;
+
+// --- Pattern Storage ---
+// A mutable buffer to hold the pattern that can be changed at runtime.
+// The default pattern from Config.h will be loaded initially.
+char currentPattern[50];
+
+void loadPattern() {
+  if (LittleFS.exists("/pattern.txt")) {
+    File patternFile = LittleFS.open("/pattern.txt", "r");
+    if (patternFile) {
+      String p = patternFile.readStringUntil('\n');
+      p.trim();
+      strncpy(currentPattern, p.c_str(), sizeof(currentPattern) - 1);
+      currentPattern[sizeof(currentPattern) - 1] = '\0';
+      patternFile.close();
+      Serial.printf("Loaded pattern from LittleFS: '%s'\n", currentPattern);
+    }
+  } else {
+    // If no file, use the default from Config.h
+    strncpy(currentPattern, pattern, sizeof(currentPattern) - 1);
+    currentPattern[sizeof(currentPattern) - 1] = '\0';
+    Serial.printf("No pattern file found. Using default: '%s'\n", currentPattern);
+  }
+}
+
+bool savePattern(const char* newPattern) {
+  // Basic validation
+  for (int i = 0; i < strlen(newPattern); i++) {
+    if (newPattern[i] != '.' && newPattern[i] != '-') {
+      Serial.printf("Invalid character in pattern: %c\n", newPattern[i]);
+      return false;
+    }
+  }
+
+  File patternFile = LittleFS.open("/pattern.txt", "w");
+  if (!patternFile) {
+    Serial.println("Failed to open pattern.txt for writing");
+    return false;
+  }
+  patternFile.println(newPattern);
+  patternFile.close();
+
+  // Update the runtime pattern
+  strncpy(currentPattern, newPattern, sizeof(currentPattern) - 1);
+  currentPattern[sizeof(currentPattern) - 1] = '\0';
+
+  Serial.printf("Saved new pattern to LittleFS: '%s'\n", currentPattern);
+  return true;
+}
+
+
+// --- Pattern Activated Servo Action ---
+void performServoAction() {
+  Serial.println("!!! PATTERN DETECTED - ACTIVATING SERVO !!!");
+
+  // Move to the active angle
+  testServo.write(servoActiveAngle);
+  currentServoPosition = servoActiveAngle;
+  Serial.printf("Servo moved to active angle: %d\n", servoActiveAngle);
+
+  // Wait for the specified duration
+  delay(servoActivationTime);
+
+  // Return to the rest angle
+  testServo.write(servoRestAngle);
+  currentServoPosition = servoRestAngle;
+  Serial.printf("Servo returned to rest angle: %d\n", servoRestAngle);
+}
+
 
 // Function declarations
 void testServoMovement();
@@ -74,11 +144,6 @@ void setupWiFi() {
 }
 
 void setupWebServer() {
-  if (!LittleFS.begin(true)) {
-    Serial.println("An Error has occurred while mounting LittleFS");
-    return;
-  }
-
   // Servo test endpoint
   server.on("/servo/test", HTTP_POST, [](AsyncWebServerRequest *request){
     testServoMovement();
@@ -111,6 +176,29 @@ void setupWebServer() {
     request->send(200, "application/json", 
                  String("{\"position\":") + currentServoPosition + "}");
   });
+
+  // --- API for Pattern Configuration ---
+
+  // GET /api/pattern - returns the current pattern
+  server.on("/api/pattern", HTTP_GET, [](AsyncWebServerRequest *request){
+    String json = "{\"pattern\":\"" + String(currentPattern) + "\"}";
+    request->send(200, "application/json", json);
+  });
+
+  // POST /api/pattern - saves a new pattern
+  server.on("/api/pattern", HTTP_POST, [](AsyncWebServerRequest *request){
+    if (request->hasParam("pattern", true)) {
+      String newPattern = request->getParam("pattern", true)->value();
+      if (savePattern(newPattern.c_str())) {
+        request->send(200, "application/json", "{\"status\":\"success\"}");
+      } else {
+        request->send(400, "application/json", "{\"status\":\"error\", \"error\":\"Invalid pattern format\"}");
+      }
+    } else {
+      request->send(400, "application/json", "{\"status\":\"error\", \"error\":\"Missing pattern parameter\"}");
+    }
+  });
+
 
   // Serve static files
   server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
@@ -194,9 +282,17 @@ void setup() {
   Serial.printf("Free Heap: %d bytes\n", ESP.getFreeHeap());
   Serial.println("==================================================\n");
   
+  // Mount filesystem first, as it's needed for config loading
+  if (!LittleFS.begin(true)) {
+    Serial.println("An Error has occurred while mounting LittleFS");
+    // It might be best to stop here if the filesystem is critical
+  }
+
+  loadPattern(); // Load the pattern from LittleFS
   setupServo();
   setupWiFi();
-  setupWebServer();
+  setupWebServer(); // This will now be able to serve files
+  initSensorLogic();
   
   Serial.println("**************************************************");
   Serial.println("       SERVO TEST SYSTEM READY!");
@@ -208,6 +304,11 @@ void setup() {
 }
 
 void loop() {
+  // Check for pattern
+  if (detectPattern()) {
+    performServoAction();
+  }
+
   updateServoTest();
   printStatus();
   delay(10); // Small delay to prevent excessive CPU usage
